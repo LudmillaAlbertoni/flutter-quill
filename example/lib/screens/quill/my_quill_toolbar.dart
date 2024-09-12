@@ -3,7 +3,6 @@ import 'dart:io' as io show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quill/extensions.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,6 +31,8 @@ class MyQuillToolbar extends StatelessWidget {
   ) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: image,
+      maxHeight: 100,
+      maxWidth: 100,
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Cropper',
@@ -77,6 +78,7 @@ class MyQuillToolbar extends StatelessWidget {
   Future<void> onImageInsert(String image, QuillController controller) async {
     if (kIsWeb || isHttpBasedUrl(image)) {
       controller.insertImageBlock(imageSource: image);
+
       return;
     }
     final newSavedImage = await saveImage(io.File(image));
@@ -90,7 +92,8 @@ class MyQuillToolbar extends StatelessWidget {
   Future<String> saveImage(io.File file) async {
     final appDocDir = await getApplicationDocumentsDirectory();
     final fileExt = path.extension(file.path);
-    final newFileName = '${DateTime.now().toIso8601String()}$fileExt';
+    final nomeArq = DateTime.now().toString().replaceAll(':', '-');
+    final newFileName = '$nomeArq$fileExt';
     final newPath = path.join(
       appDocDir.path,
       newFileName,
@@ -296,10 +299,7 @@ class MyQuillToolbar extends StatelessWidget {
             embedButtons: FlutterQuillEmbeds.toolbarButtons(
               imageButtonOptions: QuillToolbarImageButtonOptions(
                 imageButtonConfigurations: QuillToolbarImageConfigurations(
-                  onImageInsertCallback: isAndroidApp || isIosApp || kIsWeb
-                      ? (image, controller) =>
-                          onImageInsertWithCropping(image, controller, context)
-                      : onImageInsert,
+                  onImageInsertCallback: onImageInsert,
                 ),
               ),
               tableButtonOptions: const QuillToolbarTableButtonOptions(),
